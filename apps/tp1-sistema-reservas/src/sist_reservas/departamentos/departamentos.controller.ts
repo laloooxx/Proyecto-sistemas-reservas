@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { DepartamentosService } from './departamentos.service';
 import { DepartamentoDto } from './entity/departamentoDto';
@@ -40,7 +40,14 @@ export class DepartamentosController {
         try {
             const result = await this.departamentosService.actualizarDepto(id, depto);
             
-            return result;
+            if (!result) {
+                throw new NotFoundException(`El departamento con id ${id} no fue encontrado.`);
+            }
+
+            return {
+                message: 'Departamento actualizado correctamente',
+                data: result
+            };
         } catch (error) {
             handleControllerError(error);
         }
@@ -57,7 +64,11 @@ export class DepartamentosController {
         try {
             const result = await this.departamentosService.eliminarDepto(id);
 
-            return (`El departamento con el id ${id} fue eliminado correctamente`);
+            if (!result) {
+                throw new NotFoundException(`El departamento con id ${id} no fue encontrado.`);
+            }
+
+            return `El departamento con el id ${id} fue eliminado correctamente`;
         } catch (error) {
             handleControllerError(error);
         }
@@ -69,12 +80,15 @@ export class DepartamentosController {
      * @param departamentoDto los valores del departamento dto 
      * @returns el nuevo departamento creado 
      */
-    @Post('crear-departamento') 
-    async createDepto(departamentoDto: DepartamentoDto) {
+    @Post() 
+    async createDepto(@Body() departamentoDto: DepartamentoDto) {
         try {
             const newDepto = await this.departamentosService.crearDepto(departamentoDto);
 
-            return newDepto;
+            return {
+                message: 'Departamento creado con exito',
+                data: newDepto
+            };
         } catch (error) {
             handleControllerError(error);
         }
