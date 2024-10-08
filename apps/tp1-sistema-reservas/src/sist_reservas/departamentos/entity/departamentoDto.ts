@@ -5,7 +5,7 @@ export class DepartamentoDto {
     @IsNotEmpty()
     @IsPositive()
     @IsNumber()
-    id: number;
+    id_depto: number;
 
     @IsString()
     @IsNotEmpty()

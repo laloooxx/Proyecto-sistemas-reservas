@@ -5,9 +5,11 @@ import { Registro_parcelasDto } from './entity/regist_parcDto';
 import { RegistroParcelasService } from './registro_parcelas.service';
 import { PaginatorRegistroParcelas } from '../../common/types';
 import { PaginatorDto } from '../../common/paginatorDto';
+import { ApiTags } from '@nestjs/swagger';
 
 
 @Controller('registro-parcelas')
+@ApiTags('registro-parcelas')
 export class RegistroParcelasController {
     constructor(
         private readonly registroParcelasService: RegistroParcelasService,

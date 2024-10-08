@@ -5,8 +5,10 @@ import { Response } from 'express';
 import { DepartamentoDto } from '../departamentos/entity/departamentoDto';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { PaginatedReservas } from '../../common/types';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('reservas')
+@ApiTags('reservas')
 export class ReservasDeptoController {
     constructor(
         private readonly reservasService: ReservasDeptoService,
