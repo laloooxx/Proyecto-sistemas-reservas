@@ -7,7 +7,7 @@ export class Registro_parcelasDto {
     @IsNotEmpty()
     @IsNumber()
     @IsPositive()
-    id_reg_parc: number;
+    id_reg_parcela: number;
 
     @IsNumber()
     @IsPositive()

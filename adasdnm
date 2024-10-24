@@ -1,0 +1,151 @@
+[33mcommit 522801b571405d8b9e4face429e9260f360e1710[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: lalooxxx <juanisilva2000@gmail.com>
+Date:   Mon Oct 7 23:18:46 2024 -0300
+
+    "cambios pequeños"
+
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.controller.ts
+
+[33mcommit 7e10ac227150937b8034fe4d3bb0ba1922925482[m
+Author: lalooxxx <juanisilva2000@gmail.com>
+Date:   Mon Oct 7 23:08:49 2024 -0300
+
+    creamos el servicio y controlador del departamento
+
+apps/tp1-sistema-reservas/src/main.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/entity/departamentoDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/registro_parcelas.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/reservas_depto.controller.ts
+package-lock.json
+package.json
+
+[33mcommit 43f96e5621b09d502717467572581dc8856b108c[m
+Author: lalooxxx <juanisilva2000@gmail.com>
+Date:   Sun Oct 6 23:51:16 2024 -0300
+
+    terminando los servicios, controladores, añadiendo el paginador y creando el ms de correos
+
+apps/mailer/src/mailer.controller.spec.ts
+apps/mailer/src/mailer.controller.ts
+apps/mailer/src/mailer.module.ts
+apps/mailer/src/mailer.service.ts
+apps/mailer/src/main.ts
+apps/mailer/test/app.e2e-spec.ts
+apps/mailer/test/jest-e2e.json
+apps/mailer/tsconfig.app.json
+apps/tp1-sistema-reservas/src/app.module.ts
+apps/tp1-sistema-reservas/src/common/enum.ts
+apps/tp1-sistema-reservas/src/common/errors.ts
+apps/tp1-sistema-reservas/src/common/index.ts
+apps/tp1-sistema-reservas/src/common/paginationHelper.ts
+apps/tp1-sistema-reservas/src/common/paginatorDto.ts
+apps/tp1-sistema-reservas/src/common/types.ts
+apps/tp1-sistema-reservas/src/config/dbConfig.ts
+apps/tp1-sistema-reservas/src/config/env.ts
+apps/tp1-sistema-reservas/src/config/index.ts
+apps/tp1-sistema-reservas/src/main.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/departamentos.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/entity/departamentoDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/departamentos/entity/departamentos.entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/historial_pagos/entity/hist_pagDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/historial_pagos/entity/hist_pag_entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/historial_pagos/historial_pagos.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/historial_pagos/historial_pagos.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/historial_pagos/historial_pagos.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/parcelas/entity/parcelas.entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/parcelas/entity/parcelasDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/parcelas/parcelas.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/parcelas/parcelas.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/parcelas/parcelas.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/entity/regist_parcDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/entity/regist_parc_entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/registro_parcelas.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/registro_parcelas.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/registro_parcelas/registro_parcelas.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/entity/reservas_deptoDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/entity/reservas_depto_entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/reservas_depto.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/reservas_depto.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/reservas_depto/reservas_depto.service.ts
+apps/tp1-sistema-reservas/src/sist_reservas/role_guards/role_guards.guard.ts
+apps/tp1-sistema-reservas/src/sist_reservas/usuarios/entity/usuarios.entity.ts
+apps/tp1-sistema-reservas/src/sist_reservas/usuarios/entity/usuariosDto.ts
+apps/tp1-sistema-reservas/src/sist_reservas/usuarios/usuarios.controller.ts
+apps/tp1-sistema-reservas/src/sist_reservas/usuarios/usuarios.module.ts
+apps/tp1-sistema-reservas/src/sist_reservas/usuarios/usuarios.service.ts
+apps/tp1-sistema-reservas/test/app.e2e-spec.ts
+apps/tp1-sistema-reservas/test/jest-e2e.json
+apps/tp1-sistema-reservas/tsconfig.app.json
+nest-cli.json
+package-lock.json
+package.json
+src/common/index.ts
+src/config/dbConfig.ts
+src/config/index.ts
+src/sist_reservas/registro_parcelas/registro_parcelas.controller.ts
+src/sist_reservas/registro_parcelas/registro_parcelas.service.ts
+tsconfig.json
+
+[33mcommit 7d5678d1de7e90aa49d02234ce1e5ca283447afd[m
+Author: lalooxxx <juanisilva2000@gmail.com>
+Date:   Tue Oct 1 17:27:12 2024 -0300
+
+    subiendo los cambios
+
+.eslintrc.js
+.gitignore
+.prettierrc
+.vscode/settings.json
+README.md
+TP 3ro.pdf
+nest-cli.json
+package-lock.json
+package.json
+src/app.module.ts
+src/common/enum.ts
+src/common/index.ts
+src/config/dbConfig.ts
+src/config/env.ts
+src/config/index.ts
+src/main.ts
+src/sist_reservas/departamentos/departamentos.controller.ts
+src/sist_reservas/departamentos/departamentos.module.ts
+src/sist_reservas/departamentos/departamentos.service.ts
+src/sist_reservas/departamentos/entity/departamentoDto.ts
+src/sist_reservas/departamentos/entity/departamentos.entity.ts
+src/sist_reservas/historial_pagos/entity/hist_pagDto.ts
+src/sist_reservas/historial_pagos/entity/hist_pag_entity.ts
+src/sist_reservas/historial_pagos/historial_pagos.controller.ts
+src/sist_reservas/historial_pagos/historial_pagos.module.ts
+src/sist_reservas/historial_pagos/historial_pagos.service.ts
+src/sist_reservas/parcelas/entity/parcelas.entity.ts
+src/sist_reservas/parcelas/entity/parcelasDto.ts
+src/sist_reservas/parcelas/parcelas.controller.ts
+src/sist_reservas/parcelas/parcelas.module.ts
+src/sist_reservas/parcelas/parcelas.service.ts
+src/sist_reservas/registro_parcelas/entity/regist_parcDto.ts
+src/sist_reservas/registro_parcelas/entity/regist_parc_entity.ts
+src/sist_reservas/registro_parcelas/registro_parcelas.controller.ts
+src/sist_reservas/registro_parcelas/registro_parcelas.module.ts
+src/sist_reservas/registro_parcelas/registro_parcelas.service.ts
+src/sist_reservas/reservas.module.ts
+src/sist_reservas/reservas_depto/entity/reservas_deptoDto.ts
+src/sist_reservas/reservas_depto/entity/reservas_depto_entity.ts
+src/sist_reservas/reservas_depto/reservas_depto.controller.ts
+src/sist_reservas/reservas_depto/reservas_depto.module.ts
+src/sist_reservas/reservas_depto/reservas_depto.service.ts
+src/sist_reservas/role_guards/role_guards.guard.ts
+src/sist_reservas/usuarios/entity/usuarios.entity.ts
+src/sist_reservas/usuarios/entity/usuariosDto.ts
+src/sist_reservas/usuarios/usuarios.controller.ts
+src/sist_reservas/usuarios/usuarios.module.ts
+src/sist_reservas/usuarios/usuarios.service.ts
+test/app.e2e-spec.ts
+test/jest-e2e.json
+tsconfig.build.json
+tsconfig.json

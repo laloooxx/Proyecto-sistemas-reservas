@@ -1,11 +1,12 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
-import { ReservasDeptoService } from './reservas_depto.service';
-import { ReservasDeptoDto } from './entity/reservas_deptoDto';
+import { Body, Controller, Get, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { DepartamentoDto } from '../departamentos/entity/departamentoDto';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { PaginatedReservas } from '../../common/types';
-import { ApiTags } from '@nestjs/swagger';
+import { CreateDeptoDto } from '../departamentos/entity/createDeptoDto';
+import { ReservasDeptoDto } from './entity/reservas_deptoDto';
+import { ReservasDeptoService } from './reservas_depto.service';
+import { DepartamentoDto } from '../departamentos/entity/deptoDto';
 
 @Controller('reservas')
 @ApiTags('reservas')

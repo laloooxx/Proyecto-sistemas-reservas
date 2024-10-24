@@ -1,11 +1,10 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { handleControllerError } from '../../common';
-import { ParcelasDto } from '../parcelas/entity/parcelasDto';
+import { PaginatorDto } from '../../common/paginatorDto';
+import { PaginatorRegistroParcelas } from '../../common/types';
 import { Registro_parcelasDto } from './entity/regist_parcDto';
 import { RegistroParcelasService } from './registro_parcelas.service';
-import { PaginatorRegistroParcelas } from '../../common/types';
-import { PaginatorDto } from '../../common/paginatorDto';
-import { ApiTags } from '@nestjs/swagger';
 
 
 @Controller('registro-parcelas')
@@ -27,9 +26,8 @@ export class RegistroParcelasController {
         @Param('idParcela') id_parcela: number,
     ): Promise<Registro_parcelasDto> {
         try {
-            const parcelaDto: ParcelasDto = { id_parcela: id_parcela } as ParcelasDto;
-
-            const registroParcela = await this.registroParcelasService.registrarIngreso(registroDto, parcelaDto)
+            /**const parcelaDto: ParcelasDto = { id_parcela: id_parcela, precio_base_parc: 0 , estado_parcela: EstadoParcela.OCUPADA } as ParcelasDto;*/
+            const registroParcela = await this.registroParcelasService.registrarIngreso(registroDto, id_parcela)
 
             return registroParcela;
         } catch (error) {

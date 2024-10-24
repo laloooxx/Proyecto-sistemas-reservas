@@ -1,15 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DepartamentosEntity } from './entity/departamentos.entity';
 import { Repository } from 'typeorm';
-import { DepartamentoDto } from './entity/departamentoDto';
 import { handleServiceError } from '../../common';
+import { CreateDeptoDto } from './entity/createDeptoDto';
+
+import { DepartamentosEntity } from './entity/departamentos.entity';
+import { DepartamentoDto } from './entity/deptoDto';
+import { updateDepartamentoDto } from './entity/updateCreateDto';
 
 @Injectable()
 export class DepartamentosService {
     constructor(
         @InjectRepository(DepartamentosEntity)
-        private readonly deptoRepository: Repository<DepartamentoDto>
+        private readonly deptoRepository: Repository<DepartamentosEntity>
     ) { }
 
     /**
@@ -37,7 +40,7 @@ export class DepartamentosService {
      * @param id el id del departamento q queremos buscar 
      * @returns el departamento filtrado x el id
      */
-    async obtenerDeptoById(id: number): Promise<DepartamentoDto> {
+    async obtenerDeptoById(id: number): Promise<CreateDeptoDto> {
         try {
             const deptoById = await this.deptoRepository.findOne({
                 where: { id_depto: id }
@@ -57,7 +60,7 @@ export class DepartamentosService {
      * @param departamentoDto Los valores q tenemos en el dto 
      * @returns el departamento creado 
      */
-    async crearDepto(departamentoDto: DepartamentoDto): Promise<DepartamentoDto> {
+    async crearDepto(departamentoDto: CreateDeptoDto): Promise<CreateDeptoDto> {
         try {
             if (!departamentoDto.nombre || departamentoDto.nombre.trim().length === 0) {
                 throw new NotFoundException("El nombre no puede ser vacio.")
@@ -92,7 +95,7 @@ export class DepartamentosService {
      * @param depto el departamento del dto parcial 
      * @returns el nuevo departamento modificado
      */
-    async actualizarDepto(id: number, depto: Partial<DepartamentoDto>) {
+    async actualizarDepto(id: number, depto: Partial<updateDepartamentoDto>) {
         try {
             const oldDepto = await this.deptoRepository.findOne({
                 where: { id_depto: id }

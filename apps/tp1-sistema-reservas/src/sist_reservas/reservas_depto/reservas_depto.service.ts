@@ -1,27 +1,27 @@
-import { HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { LessThanOrEqual, MoreThanOrEqual, QueryFailedError, Repository } from 'typeorm';
-import { ReservasDeptoDto } from './entity/reservas_deptoDto';
-import { DepartamentoDto } from '../departamentos/entity/departamentoDto';
-import { EstadoReserva } from '../../common/enum';
-import { differenceInCalendarDays } from 'date-fns';
-import { ReservasDeptoEntity } from './entity/reservas_depto_entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DepartamentosEntity } from '../departamentos/entity/departamentos.entity';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { differenceInCalendarDays } from 'date-fns';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { handleServiceError } from '../../common';
+import { EstadoReserva } from '../../common/enum';
+import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginationHelper';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { Metadata, PaginatedReservas } from '../../common/types';
-import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginationHelper';
+import { DepartamentosEntity } from '../departamentos/entity/departamentos.entity';
+import { DepartamentoDto } from '../departamentos/entity/deptoDto';
+import { ReservasDeptoEntity } from './entity/reservas_depto_entity';
+import { ReservasDeptoDto } from './entity/reservas_deptoDto';
 
 @Injectable()
 export class ReservasDeptoService {
     constructor(
         @InjectRepository(ReservasDeptoEntity)
-        private readonly reservasService: Repository<ReservasDeptoDto>,
-        @InjectRepository(DepartamentosEntity)
-        private readonly deptoService: Repository<DepartamentoDto>,
+            private readonly reservasService: Repository<ReservasDeptoDto>,
         @Inject('Mailer_MS')
-        private readonly client: ClientProxy
+            private readonly client: ClientProxy,
+        @InjectRepository(DepartamentosEntity)
+        private readonly deptoService: Repository<DepartamentosEntity>,
     ) { 
         client.send('send-mail', 'test');
     }
@@ -32,12 +32,12 @@ export class ReservasDeptoService {
      * @param id_depto el id del departamento
      * @returns La reserva creada
      */
-    async crearReserva(reservaDto: ReservasDeptoDto, id_depto: DepartamentoDto): Promise<ReservasDeptoDto> {
+    async crearReserva(reservaDto: ReservasDeptoDto, id_depto: DepartamentoDto) {
         try {
             // Verificar si el departamento existe
             const depto = await this.deptoService.findOne({ 
                 where: 
-                { id: reservaDto.id_depto } 
+                { id_depto: reservaDto.id_depto } 
                 });
             if (!depto) {
                 throw new Error('El departamento no existe');
@@ -46,7 +46,7 @@ export class ReservasDeptoService {
             // Verificar si el departamento está disponible para las fechas solicitadas
             const reservaExistente = await this.reservasService.findOne({
                 where: {
-                    id_depto: reservaDto.id_depto,
+                    id_reserva_depto: reservaDto.id_depto,
                     //buscamos reservas cuyo campo "desde" sea menor o igual a reservaDto.hasta (la fecha de fin de la nueva reserva).Usamos dos nodos para determinar si el primero es menor o igual que el segundo
                     desde: LessThanOrEqual(reservaDto.hasta),
                     hasta: MoreThanOrEqual(reservaDto.desde)
@@ -74,6 +74,8 @@ export class ReservasDeptoService {
             //guardamos la reserva
             await this.reservasService.save(nuevaReserva);
 
+            this.client.emit("send-mail", "text")
+
             return nuevaReserva;
         } catch (error) {
             handleServiceError(error);
@@ -88,7 +90,7 @@ export class ReservasDeptoService {
      * @returns El precio total del departamento
      */
     async calcularPrecioTotal(id_depto: number, desde: Date, hasta: Date): Promise<number> {
-        const depto = await this.deptoService.findOne({ where: { id: id_depto } });
+        const depto = await this.deptoService.findOne({ where: { id_depto: id_depto } });
         console.log("depto", depto);
         if (!depto) {
             throw new Error('El departamento no existe');
@@ -116,7 +118,7 @@ export class ReservasDeptoService {
             //Verificamos si existen reservas para las mismas fechas
             const reservasExistentes = await this.reservasService.find({
                 where: {
-                    id_depto: reservaDto.id_depto,
+                    id_reserva_depto: reservaDto.id_depto,
                     desde: LessThanOrEqual(reservaDto.hasta),
                     hasta: MoreThanOrEqual(reservaDto.desde)
                 }

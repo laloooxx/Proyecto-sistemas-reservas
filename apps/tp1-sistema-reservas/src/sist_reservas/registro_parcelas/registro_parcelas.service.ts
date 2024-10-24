@@ -4,13 +4,12 @@ import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { EstadoParcela, handleServiceError } from '../../common';
+import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginationHelper';
+import { PaginatorDto } from '../../common/paginatorDto';
+import { Metadata, PaginatorRegistroParcelas } from '../../common/types';
 import { ParcelasEntity } from '../parcelas/entity/parcelas.entity';
-import { ParcelasDto } from '../parcelas/entity/parcelasDto';
 import { Registro_parcelasEntity } from './entity/regist_parc_entity';
 import { Registro_parcelasDto } from './entity/regist_parcDto';
-import { Metadata, PaginatorRegistroParcelas } from '../../common/types';
-import { PaginatorDto } from '../../common/paginatorDto';
-import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginationHelper';
 
 
 
@@ -18,9 +17,9 @@ import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginat
 export class RegistroParcelasService {
   constructor(
     @InjectRepository(Registro_parcelasEntity)
-    private readonly registroParcelaRepository: Repository<Registro_parcelasDto>,
+    private readonly registroParcelaRepository: Repository<Registro_parcelasEntity>,
     @InjectRepository(ParcelasEntity)
-    private readonly parcelaRepository: Repository<ParcelasDto>
+    private readonly parcelaRepository: Repository<ParcelasEntity>
   ) { }
 
   /**
@@ -29,12 +28,12 @@ export class RegistroParcelasService {
    * @param registroIngreso los datos el registro de ingreso 
    * @returns el nuevo registro de la parcela
    */
-  async registrarIngreso(registroIngreso: Registro_parcelasDto, id_parcela: ParcelasDto): Promise<Registro_parcelasDto> {
+  async registrarIngreso(registroIngreso: Registro_parcelasDto, id_parcela: number) {
     try {
       //verificamos q la parcela este disponible
       const parcela = await this.parcelaRepository.findOne({
         where: {
-          id_parcela: registroIngreso.id_reg_parc
+          id_parcela: id_parcela
         }
       });
       if (!parcela) {
@@ -50,7 +49,7 @@ export class RegistroParcelasService {
 
 
       const newRegistro = this.registroParcelaRepository.create({
-        ...Registro_parcelasDto,
+        ...registroIngreso,
         f_ingreso: new Date(),
         codigo_unico_parcela: codigoUnico
       });
@@ -83,11 +82,11 @@ export class RegistroParcelasService {
       registro.f_salida = new Date();
 
       //calculamos el precio total
-      const precioTotal = await this.calcularPrecioTotal(registro.id_reg_parc, registro.f_ingreso, registro.f_salida);
+      const precioTotal = await this.calcularPrecioTotal(registro.id_reg_parcela, registro.f_ingreso, registro.f_salida);
       //Actualizamos el registro con el precio total
       registro.precio_total_parc = precioTotal;
 
-      const parcela = await this.parcelaRepository.findOne({ where: { id_parcela: registro.id_reg_parc } });
+      const parcela = await this.parcelaRepository.findOne({ where: { id_parcela: registro.id_reg_parcela } });
       if (!parcela) {
         throw new NotFoundException('parcela no encontrada');
       }

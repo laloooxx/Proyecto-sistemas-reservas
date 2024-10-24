@@ -1,8 +1,10 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { DepartamentosService } from './departamentos.service';
-import { DepartamentoDto } from './entity/departamentoDto';
+import { CreateDeptoDto } from './entity/createDeptoDto';
+import { DepartamentoDto  } from './entity/deptoDto';
 import { handleControllerError } from '../../common';
+import { updateDepartamentoDto } from './entity/updateCreateDto';
 
 @Controller('departamentos')
 @ApiTags('departamentos')
@@ -35,7 +37,7 @@ export class DepartamentosController {
     @Patch(':id')
     async updateDepartamento(
         @Param('id') id: number,
-        @Body() depto: Partial<DepartamentoDto>
+        @Body() depto: Partial<updateDepartamentoDto>
     ) {
         try {
             const result = await this.departamentosService.actualizarDepto(id, depto);
@@ -81,9 +83,9 @@ export class DepartamentosController {
      * @returns el nuevo departamento creado 
      */
     @Post() 
-    async createDepto(@Body() departamentoDto: DepartamentoDto) {
+    async createDepto(@Body() deptoDto: CreateDeptoDto) {
         try {
-            const newDepto = await this.departamentosService.crearDepto(departamentoDto);
+            const newDepto = await this.departamentosService.crearDepto(deptoDto);
 
             return {
                 message: 'Departamento creado con exito',
