@@ -9,7 +9,8 @@ export enum EstadoParcela {
 export enum EstadoReserva {
     PENDIENTE = 'PENDIENTE',
     APROBADA = 'APROBADA',
-    RECHAZADA = 'RECHAZADA'
+    RECHAZADA = 'RECHAZADA',
+    TERMINADA = 'TERMINADA'
 }
 
 export enum Role {

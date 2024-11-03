@@ -1,4 +1,4 @@
-import { ReservasDeptoDto } from '../sist_reservas/reservas_depto/entity/reservas_deptoDto'
+import { ReservasDeptoDto } from '../sist_reservas/reservas_depto/entity/create_reservas_deptoDto'
 import { Registro_parcelasDto } from '../sist_reservas/registro_parcelas/entity/regist_parcDto'
 
 

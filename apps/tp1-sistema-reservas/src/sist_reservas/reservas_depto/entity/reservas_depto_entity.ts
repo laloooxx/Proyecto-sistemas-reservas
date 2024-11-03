@@ -1,7 +1,7 @@
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { EstadoReserva } from "../../../common/enum";
 import { DepartamentosEntity } from "../../departamentos/entity/departamentos.entity";
 import { UsuariosEntity } from "../../usuarios/entity/usuarios.entity";
-import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { EstadoReserva } from "../../../common/enum";
 
 
 @Entity("reservas_depto")

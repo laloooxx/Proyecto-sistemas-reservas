@@ -6,9 +6,15 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 export class MailerController {
   constructor(private readonly mailerService: MailerService) {}
 
-  @EventPattern('send-mail')
-  getHello(@Payload() payload: any): string {
+  @EventPattern('send-mail-reserva')
+  reserva(@Payload() payload: any): string {
     console.log(payload);
-    return this.mailerService.getHello();
+    return this.mailerService.mailConfirmacionReserva();
+  }
+
+  @EventPattern('send-mail-registro')
+  registro(@Payload() payload: any): string {
+    console.log(payload);
+    return this.mailerService.mailConfirmacionRegistro();
   }
 }

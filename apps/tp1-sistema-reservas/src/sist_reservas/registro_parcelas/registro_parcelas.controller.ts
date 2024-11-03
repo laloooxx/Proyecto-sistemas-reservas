@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { handleControllerError } from '../../common';
 import { PaginatorDto } from '../../common/paginatorDto';
@@ -64,4 +64,22 @@ export class RegistroParcelasController {
             handleControllerError(error);
         }
     }
+
+
+    /**
+ * @description Endpoint para eliminar un registro de parcela por su código único.
+ * @param codigoUnico El código único del registro a eliminar.
+ * @returns Mensaje de éxito o error si no se encuentra el registro.
+ */
+@Delete('eliminar/:codigoUnico')
+async eliminarRegistro(
+  @Param('codigoUnico') codigoUnico: string
+): Promise<string> {
+  try {
+    return await this.registroParcelasService.eliminarRegistroPorCodigoUnico(codigoUnico);
+  } catch (error) {
+    handleControllerError(error);
+  }
+}
+
 }

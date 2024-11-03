@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { Repository } from 'typeorm';
@@ -10,6 +10,7 @@ import { Metadata, PaginatorRegistroParcelas } from '../../common/types';
 import { ParcelasEntity } from '../parcelas/entity/parcelas.entity';
 import { Registro_parcelasEntity } from './entity/regist_parc_entity';
 import { Registro_parcelasDto } from './entity/regist_parcDto';
+import { ClientProxy } from '@nestjs/microservices';
 
 
 
@@ -19,8 +20,14 @@ export class RegistroParcelasService {
     @InjectRepository(Registro_parcelasEntity)
     private readonly registroParcelaRepository: Repository<Registro_parcelasEntity>,
     @InjectRepository(ParcelasEntity)
-    private readonly parcelaRepository: Repository<ParcelasEntity>
-  ) { }
+    private readonly parcelaRepository: Repository<ParcelasEntity>,
+    @Inject('Mailer_MS')
+    private readonly client: ClientProxy,
+
+    private readonly logger = new Logger('RegistroServiceLogger')
+  ) { 
+    client.send('send-mail', 'test')
+   }
 
   /**
    * @description va a marcar el ingreso de una parcela 
@@ -44,18 +51,26 @@ export class RegistroParcelasService {
         throw new BadRequestException('La parcela esta ocupada')
       }
 
+      //comprobamos q l fecha de salida sea mayor q a la de ingreso
+      if (registroIngreso.f_salida <= registroIngreso.f_ingreso) {
+        throw new Error('La fecha de salida no puede ser anterior o igual a la fecha de ingreso');
+      }
+
 
       const codigoUnico = uuidv4().split('-')[0];
 
 
       const newRegistro = this.registroParcelaRepository.create({
         ...registroIngreso,
-        f_ingreso: new Date(),
+        parcela: parcela,
+        f_ingreso: registroIngreso.f_ingreso,
         codigo_unico_parcela: codigoUnico
       });
 
       parcela.estado_parcela = EstadoParcela.OCUPADA;
       await this.parcelaRepository.save(parcela);
+
+      this.client.emit("send-mail", 'Registro de parcela correctamente');
 
       return await this.registroParcelaRepository.save(newRegistro);
     } catch (error) {
@@ -69,17 +84,15 @@ export class RegistroParcelasService {
    * @param codigo_unico_parcela codigo unico del registro de la parcela
    * @returns el registro de la parcela actualizado 
    */
-  async registrarSalida( codigo_unico_parcela: string): Promise<Registro_parcelasDto> {
+  async registrarSalida(codigo_unico_parcela: string): Promise<Registro_parcelasDto> {
 
     try {
       //buscamos el reigstro de la parcela
       const registro = await this.registroParcelaRepository.findOne({ where: { codigo_unico_parcela } });
-      if (!registro || registro.f_salida) {
+      if (!registro) {
         throw new NotFoundException('Registro no enccontrado o ya finalizado')
       };
 
-      //Actualizamos el registro con la fecha de salida
-      registro.f_salida = new Date();
 
       //calculamos el precio total
       const precioTotal = await this.calcularPrecioTotal(registro.id_reg_parcela, registro.f_ingreso, registro.f_salida);
@@ -99,27 +112,24 @@ export class RegistroParcelasService {
     }
   }
 
-/**
- * @description calcula el precio total de la parcela
- * @param id_reg_parc el id del registro de la parcela
- * @param f_ingreso la fecha de ingreso a la parcela
- * @param f_salida la fecha de salida a la parcela
- * @returns el precio total de la parcela
- */
+  /**
+   * @description calcula el precio total de la parcela
+   * @param id_reg_parc el id del registro de la parcela
+   * @param f_ingreso la fecha de ingreso a la parcela
+   * @param f_salida la fecha de salida a la parcela
+   * @returns el precio total de la parcela
+   */
   async calcularPrecioTotal(id_reg_parc: number, f_ingreso: Date, f_salida: Date): Promise<number> {
     const parcela = await this.parcelaRepository.findOne({ where: { id_parcela: id_reg_parc } });
     if (!parcela) {
       throw new Error('El departamento no existe');
     }
 
-    //comprobamos q l fecha de salida sea mayor q a la de ingreso
-    if (f_salida <= f_ingreso) {
-      throw new Error('La fecha de salida no puede ser anterior o igual a la fecha de ingreso');
-    }
+
 
     //extraemos el precio base del departamento, si viene null o undefined, lo seteamos en 0
     const precio_base_parcela = parcela.precio_base_parc || 0;
-    console.log("el precio base d la parcela", precio_base_parcela);
+    this.logger.log("el precio base d la parcela", precio_base_parcela);
     //calculamos la cantidad de dias entre las fechas
     const dias = differenceInCalendarDays(f_salida, f_ingreso);
 
@@ -147,20 +157,20 @@ export class RegistroParcelasService {
       const queryBuilder = this.registroParcelaRepository.createQueryBuilder('user');
       //usamos el query.search, asi q usamos el where para filtrar x nombre
       if (query.search) {
-          queryBuilder.where(
-              //la busqueda es case-insensitive gracias al lower
-              'LOWER(user.nombre) LIKE LOWER(:search)', { search: `%${query.search}%` }
-          )
+        queryBuilder.where(
+          //la busqueda es case-insensitive gracias al lower
+          'LOWER(user.nombre) LIKE LOWER(:search)', { search: `%${query.search}%` }
+        )
       }
 
       //ejecutamos la consulta
       const [rows, count] = await queryBuilder
-          //limitamos el numero de resultados
-          .take(take)
-          //salteamos los resultados de las paginas anteriores
-          .skip(skip)
-          //ejecutamos la consulta y devolvemos tanto los resultados como el conteo total
-          .getManyAndCount()
+        //limitamos el numero de resultados
+        .take(take)
+        //salteamos los resultados de las paginas anteriores
+        .skip(skip)
+        //ejecutamos la consulta y devolvemos tanto los resultados como el conteo total
+        .getManyAndCount()
 
       //calculamos el total de paginas dividiendo el total de items por los items x pagina
       const totalPages = Math.ceil(count / take);
@@ -169,12 +179,12 @@ export class RegistroParcelasService {
 
       //creamos un objeto con toda laa informacion de la paginacion 
       const metadata: Metadata = {
-          itemsPerPage: take,
-          totalPages,
-          totalItems: count,
-          currentPage: page,
-          nextPage,
-          searchTerm: query.search || ''
+        itemsPerPage: take,
+        totalPages,
+        totalItems: count,
+        currentPage: page,
+        nextPage,
+        searchTerm: query.search || ''
       }
 
       //y devolvemos los resultados (rows) y los metadatos
@@ -183,4 +193,25 @@ export class RegistroParcelasService {
       handleServiceError(error);
     }
   }
+
+
+  /**
+ * @description Elimina un registro de parcela por su código único.
+ * @param codigoUnicoParcela El código único del registro que se desea eliminar.
+ * @returns Mensaje de éxito o error si no se encuentra el registro.
+ */
+  async eliminarRegistroPorCodigoUnico(codigo_unico_parcela: string): Promise<string> {
+    try {
+      const resultado = await this.registroParcelaRepository.delete({ codigo_unico_parcela: codigo_unico_parcela });
+
+      if (resultado.affected === 0) {
+        throw new NotFoundException('Registro no encontrado');
+      }
+
+      return 'Registro eliminado exitosamente';
+    } catch (error) {
+      handleServiceError(error);
+    }
+  }
 }
+

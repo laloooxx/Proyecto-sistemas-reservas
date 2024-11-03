@@ -1,12 +1,11 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { handleControllerError } from '../../common';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { PaginatedReservas } from '../../common/types';
-import { CreateDeptoDto } from '../departamentos/entity/createDeptoDto';
-import { ReservasDeptoDto } from './entity/reservas_deptoDto';
+import { CreateReservaDto } from './entity/create_reservas_deptoDto';
 import { ReservasDeptoService } from './reservas_depto.service';
-import { DepartamentoDto } from '../departamentos/entity/deptoDto';
 
 @Controller('reservas')
 @ApiTags('reservas')
@@ -17,9 +16,9 @@ export class ReservasDeptoController {
 
     @Post('crear-reserva/:idDepto')
     async create(
-        @Body() reservaDto: ReservasDeptoDto,
+        @Body() reservaDto: CreateReservaDto,
         @Res() response: Response,
-        @Param('idDepto') idDepto: DepartamentoDto,
+        @Param('idDepto') idDepto: number,
     ) {
         try {
             const reserva = await this.reservasService.crearReserva(reservaDto, idDepto);
@@ -33,19 +32,14 @@ export class ReservasDeptoController {
                 });
         } catch (error) {
             console.error("Error en el controlador de reserva de departamento", error);
-            return response
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .json({
-                    message: error.message,
-                    error: true
-                });
+            handleControllerError(error);
         }
     }
 
     @Post('reservas-pendientes')
-    async reservasPendientes(@Body() reservaDto: ReservasDeptoDto, @Res() response: Response) {
+    async reservasPendientes(@Body() reservaDto: CreateReservaDto, @Res() response: Response, @Param() id_depto: number) {
         try {
-            const reserva = await this.reservasService.manejarReservasMultiples(reservaDto);
+            const reserva = await this.reservasService.manejarReservasMultiples(reservaDto, id_depto);
 
             return response
                 .status(HttpStatus.OK)
@@ -54,18 +48,28 @@ export class ReservasDeptoController {
                     data: reserva
                 })
         } catch (error) {
-            console.error("Error en el controlador de reserva de departamento", error);
-            return response
-                .status(HttpStatus.BAD_REQUEST)
-                .json({
-                    message: error.message,
-                    error: true
-                })
+            handleControllerError(error);
+        }
+    }
+
+
+    @Post('registrar-salida/:id_reserva_depto')
+    async registrarSalida(@Param('id_reserva_depto') id_reserva_depto: number): Promise<CreateReservaDto> {
+        try {
+            const reservaTerminada = await this.reservasService.registrarSalidaDepto(id_reserva_depto);
+            
+            return reservaTerminada;
+        } catch (error) {
+            handleControllerError(error);
         }
     }
 
     @Get()
     async mostrarReservas(@Query() params: PaginatorDto): Promise<PaginatedReservas> {
-        return this.reservasService.mostrarReservas(params)
+        try {
+            return this.reservasService.mostrarReservas(params)  
+        } catch (error) {
+            handleControllerError(error);
+        } 
     }
 }
