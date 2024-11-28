@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateParcelasDto } from './entity/createParcelasDto';
-import { ParcelasDto } from './entity/parcelasDto';
-import { updateParcelaDto } from './entity/updateParcelaDto';
+import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ParcelasEntity } from './entity/parcelas.entity';
 import { Repository } from 'typeorm';
 import { handleServiceError } from '../../common';
+import { CreateParcelasDto } from './entity/createParcelasDto';
+import { ParcelasEntity } from './entity/parcelas.entity';
+import { updateParcelaDto } from './entity/updateParcelaDto';
 
 @Injectable()
 export class ParcelasService {
@@ -40,7 +40,7 @@ export class ParcelasService {
         try {
             const parcela = await this.parcelaRepository.find();
         if (!parcela) {
-            throw new NotFoundException('No existen parcelas')
+            throw new RpcException('No existen parcelas')
         }
 
         return parcela;
@@ -55,7 +55,7 @@ export class ParcelasService {
      * @param id el id de la parcela q queremos filtrar
      * @returns la parcela filtrada x su id
      */
-   async buscarUnaParcela(id: number): Promise<ParcelasDto> {
+   async buscarUnaParcela(id: number): Promise<CreateParcelasDto> {
         try {
             const parcelaId = await this.parcelaRepository.findOne(
                 {
@@ -63,7 +63,7 @@ export class ParcelasService {
                 }
             )
             if (!parcelaId) {
-                throw new NotFoundException(`La parcela con el id ${id} no fue encontrada`)
+                throw new RpcException(`La parcela con el id ${id} no fue encontrada`)
             }
 
             return parcelaId;
@@ -79,23 +79,22 @@ export class ParcelasService {
      * @param parcela los datos de la parcela q tenemos en el dto
      * @returns la parcela actualizada
      */
-    async actualizarParcela(id: number, parcela: Partial<updateParcelaDto>) {
+    async actualizarParcela(id_parcela: number, parcela: Partial<updateParcelaDto>) {
         try {
             const parcelaOld = await this.parcelaRepository.findOne( {
                 where: {
-                    id_parcela: id
+                    id_parcela
                 }
             })
 
             if (!parcelaOld) {
-                throw new NotFoundException(`La parcela con el id ${id} no fue encontrada`)
+                throw new RpcException(`La parcela con el id ${id_parcela} no fue encontrada`)
             }
 
-            const mergeParcela = this.parcelaRepository.merge(parcelaOld, parcela);
+            const result = Object.assign(parcelaOld, parcela);
 
-            const result = await this.parcelaRepository.save(mergeParcela);
 
-            return result;
+            return await this.parcelaRepository.save(result);
         } catch (error) {
             handleServiceError(error);
         }
@@ -109,11 +108,13 @@ export class ParcelasService {
      */
     async eliminarParcela(id: number): Promise<any> {
         try {
-            const parcela = await this.parcelaRepository.delete(id);
+            const idParcela = await this.parcelaRepository.findOne({where: {id_parcela: id}});
 
-            if (!parcela) {
-                throw new NotFoundException(`La parcela con el id ${id} no fue encontrada`)
+            if (!idParcela) {
+                throw new RpcException(`La parcela con el id ${id} no fue encontrada`)
             }
+
+            const parcela = await this.parcelaRepository.delete(idParcela);
 
             return parcela;
         } catch (error) {

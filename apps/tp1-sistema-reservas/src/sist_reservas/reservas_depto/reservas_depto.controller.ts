@@ -1,6 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Controller, ParseIntPipe } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { handleControllerError } from '../../common';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { PaginatedReservas } from '../../common/types';
@@ -8,55 +7,45 @@ import { CreateReservaDto } from './entity/create_reservas_deptoDto';
 import { ReservasDeptoService } from './reservas_depto.service';
 
 @Controller('reservas')
-@ApiTags('reservas')
 export class ReservasDeptoController {
     constructor(
         private readonly reservasService: ReservasDeptoService,
     ) { }
 
-    @Post('crear-reserva/:idDepto')
+    @MessagePattern({cmd: 'crear-reserva'})
     async create(
-        @Body() reservaDto: CreateReservaDto,
-        @Res() response: Response,
-        @Param('idDepto') idDepto: number,
-    ) {
+        @Payload() data: { reservaDto: CreateReservaDto, id_depto: number, id_usuario: number}
+    ): Promise<CreateReservaDto> {
+        const { reservaDto, id_depto, id_usuario } = data;
         try {
-            const reserva = await this.reservasService.crearReserva(reservaDto, idDepto);
+            const reserva = await this.reservasService.crearReserva(reservaDto, id_depto, id_usuario);
 
-            return response
-                .status(HttpStatus.CREATED)
-                .json({
-                    ok: true,
-                    message: 'Reserva creada correctamente',
-                    reserva
-                });
+            return reserva;
         } catch (error) {
             console.error("Error en el controlador de reserva de departamento", error);
             handleControllerError(error);
         }
     }
 
-    @Post('reservas-pendientes')
-    async reservasPendientes(@Body() reservaDto: CreateReservaDto, @Res() response: Response, @Param() id_depto: number) {
+    @MessagePattern({cmd: 'reservas-pendientes'})
+    async reservasPendientes(
+        @Payload() data: { reservaDto: CreateReservaDto, id_depto: number} 
+        ): Promise<CreateReservaDto> {
+            const { reservaDto, id_depto } = data;
         try {
             const reserva = await this.reservasService.manejarReservasMultiples(reservaDto, id_depto);
 
-            return response
-                .status(HttpStatus.OK)
-                .json({
-                    message: 'Reserva procesada correctamente',
-                    data: reserva
-                })
+           return reserva;
         } catch (error) {
             handleControllerError(error);
         }
     }
 
 
-    @Post('registrar-salida/:id_reserva_depto')
-    async registrarSalida(@Param('id_reserva_depto') id_reserva_depto: number): Promise<CreateReservaDto> {
+    @MessagePattern({ cmd: 'registrar-salida'})
+    async registrarSalida(@Payload() payload: {id_reserva_depto: number}): Promise<CreateReservaDto> {
         try {
-            const reservaTerminada = await this.reservasService.registrarSalidaDepto(id_reserva_depto);
+            const reservaTerminada = await this.reservasService.registrarSalidaDepto(payload.id_reserva_depto);
             
             return reservaTerminada;
         } catch (error) {
@@ -64,8 +53,8 @@ export class ReservasDeptoController {
         }
     }
 
-    @Get()
-    async mostrarReservas(@Query() params: PaginatorDto): Promise<PaginatedReservas> {
+    @MessagePattern({cmd: 'mostrar-reservas'})
+    async mostrarReservas(@Payload() params: PaginatorDto): Promise<PaginatedReservas> {
         try {
             return this.reservasService.mostrarReservas(params)  
         } catch (error) {

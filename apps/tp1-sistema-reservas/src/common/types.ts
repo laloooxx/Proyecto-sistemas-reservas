@@ -1,4 +1,5 @@
-import { ReservasDeptoDto } from '../sist_reservas/reservas_depto/entity/create_reservas_deptoDto'
+import { CreateReservaDto } from '../sist_reservas/reservas_depto/entity/create_reservas_deptoDto'
+import { ReservaDeptoDto } from '../sist_reservas/reservas_depto/entity/reservas_deptoDto'
 import { Registro_parcelasDto } from '../sist_reservas/registro_parcelas/entity/regist_parcDto'
 
 
@@ -13,7 +14,7 @@ export interface Metadata {
 
 export interface PaginatedReservas {
     metadata: Metadata
-    rows: ReservasDeptoDto[]
+    rows: ReservaDeptoDto[]
 }
 
 export interface PaginatorRegistroParcelas {

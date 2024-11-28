@@ -1,19 +1,45 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, NotFoundException } from '@nestjs/common';
-import { ParcelasService } from './parcelas.service';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, ParseIntPipe } from '@nestjs/common';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
+import { handleControllerError } from '../../common';
 import { CreateParcelasDto } from './entity/createParcelasDto';
 import { updateParcelaDto } from './entity/updateParcelaDto';
-import { ParcelasDto } from './entity/parcelasDto';
-import { handleControllerError } from '../../common';
+import { ParcelasService } from './parcelas.service';
 
 @Controller('parcelas')
-@ApiTags('parcelas')
 export class ParcelasController {
     constructor(
         private readonly parcelasService: ParcelasService) { }
 
-    @Post()
-    async createParcela(@Body() parcelaDto: CreateParcelasDto) {
+
+    @MessagePattern({cmd: 'get-parcela'})
+    async findParcelas(): Promise<CreateParcelasDto[]> {
+        try {
+            const parcelas = await this.parcelasService.buscarParcelas();
+
+            return parcelas;
+        } catch (error) {
+            handleControllerError(error);
+        }
+    }
+
+    @MessagePattern({cmd: 'find-parcela'})
+    async findOneParcela(@Payload('id_parcela') id_parcela: number): Promise<CreateParcelasDto> {
+        try {
+            const parcela = await this.parcelasService.buscarUnaParcela(id_parcela);
+
+            if (!parcela) {
+                throw new RpcException(`La parcela con id ${id_parcela} no fue encontrada.`)
+            }
+
+            return parcela;
+        } catch (error) {
+            handleControllerError(error);
+        }
+    }
+
+    
+    @MessagePattern({cmd: 'create-parcela'})
+    async createParcela(@Payload() parcelaDto: CreateParcelasDto) {
         try {
             const parcela = await this.parcelasService.crearParcela(parcelaDto);
 
@@ -26,58 +52,33 @@ export class ParcelasController {
         }
     }
 
-    @Get()
-    async findParcelas(): Promise<CreateParcelasDto[]> {
+    @MessagePattern({cmd: 'update-parcela'})
+    async updateParcela(@Payload() data: { id_parcela:number, parcela: updateParcelaDto, id_usuario: number} ) {
+            const { id_parcela, parcela, id_usuario } = data;
         try {
-            const parcelas = await this.parcelasService.buscarParcelas();
-
-            return parcelas;
-        } catch (error) {
-            handleControllerError(error);
-        }
-    }
-
-    @Get(':id')
-    async findOneParcela(@Param('id') id: number): Promise<ParcelasDto> {
-        try {
-            const parcelaId = await this.parcelasService.buscarUnaParcela(id);
-
-            if (!parcelaId) {
-                throw new NotFoundException(`La parcela con id ${id} no fue encontrada.`)
-            }
-
-            return parcelaId;
-        } catch (error) {
-            handleControllerError(error);
-        }
-    }
-
-    @Patch(':id')
-    async updateParcela(@Param('id') id: number,
-        @Body() parcela: Partial<updateParcelaDto>) {
-        try {
-            const parcelaNew = this.parcelasService.actualizarParcela(id, parcela);
+            
+            const parcelaNew = this.parcelasService.actualizarParcela(id_parcela, parcela);
 
             if (!parcelaNew) {
-                throw new NotFoundException(`La parcela con id ${id} no fue encontrada.`)
+                throw new RpcException(`La parcela con id ${id_parcela} no fue encontrada.`)
             }
 
             return {
-                message: `La parcela con id ${id} fue actualizada correctamente`,
-                data: parcelaNew
+                message: `La parcela con id ${id_parcela} fue actualizada correctamente`,
+                data: data
             }
         } catch (error) {
             handleControllerError(error);
         }
     }
 
-    @Delete(':id')
-    async removeParcela(@Param('id') id: number) {
+    @MessagePattern({cmd: 'delete-parcela'})
+    async removeParcela(@Payload() id: number) {
         try {
             const parcela = await this.parcelasService.eliminarParcela(id);
 
             if (!parcela) {
-                throw new NotFoundException(`Parcela con el ${id} no fue encontrada`);
+                throw new RpcException(`Parcela con el ${id} no fue encontrada`);
             }
 
             return {

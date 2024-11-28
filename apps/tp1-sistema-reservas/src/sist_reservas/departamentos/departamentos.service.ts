@@ -3,10 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { handleServiceError } from '../../common';
 import { CreateDeptoDto } from './entity/createDeptoDto';
-
 import { DepartamentosEntity } from './entity/departamentos.entity';
 import { DepartamentoDto } from './entity/deptoDto';
 import { updateDepartamentoDto } from './entity/updateCreateDto';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class DepartamentosService {
@@ -24,7 +24,7 @@ export class DepartamentosService {
             const depto = await this.deptoRepository.find();
 
             if (!depto) {
-                throw new NotFoundException('No existen departamentos');
+                throw new RpcException('No existen departamentos');
             }
 
             return depto;
@@ -46,7 +46,7 @@ export class DepartamentosService {
                 where: { id_depto: id }
             });
             if (!deptoById) {
-                throw new NotFoundException(`El departamento con el id ${id} no fue encontrado`)
+                throw new RpcException(`El departamento con el id ${id} no fue encontrado`)
             }
 
             return deptoById;
@@ -63,7 +63,7 @@ export class DepartamentosService {
     async crearDepto(departamentoDto: CreateDeptoDto): Promise<CreateDeptoDto> {
         try {
             if (!departamentoDto.nombre || departamentoDto.nombre.trim().length === 0) {
-                throw new NotFoundException("El nombre no puede ser vacio.")
+                throw new RpcException("El nombre no puede ser vacio.")
             };
 
             const existDepto = await this.deptoRepository.findOne({
@@ -71,11 +71,11 @@ export class DepartamentosService {
             });
 
             if (existDepto) {
-                throw new NotFoundException(`El número de departamento ${departamentoDto.numero_depto} ya está en uso.`)
+                throw new RpcException(`El número de departamento ${departamentoDto.numero_depto} ya está en uso.`)
             };
 
             if (departamentoDto.capacidad < 1 && departamentoDto.capacidad > 12) {
-                throw new NotFoundException('La capacidad del departamento debe ser entre 1 y 12 personas')
+                throw new RpcException('La capacidad del departamento debe ser entre 1 y 12 personas')
             }
 
             const newDepto = this.deptoRepository.create(departamentoDto);
@@ -95,21 +95,19 @@ export class DepartamentosService {
      * @param depto el departamento del dto parcial 
      * @returns el nuevo departamento modificado
      */
-    async actualizarDepto(id: number, depto: Partial<updateDepartamentoDto>) {
+    async actualizarDepto(id_depto: number, depto: Partial<updateDepartamentoDto>): Promise<DepartamentosEntity | null> {
         try {
-            const oldDepto = await this.deptoRepository.findOne({
-                where: { id_depto: id }
+            const departamento = await this.deptoRepository.findOne({
+                where: { id_depto }
             })
 
-            if (!oldDepto) {
-                throw new NotFoundException(`El departamento con el id ${id} no fue encontrado`)
+            if (!departamento) {
+                throw new RpcException(`El departamento con el id ${id_depto} no fue encontrado`)
             };
 
-            const mergeDepto = this.deptoRepository.merge(oldDepto, depto);
 
-            const result = await this.deptoRepository.save(mergeDepto);
-
-            return result;
+            const actualizarDepto = Object.assign(departamento, depto);
+            return await this.deptoRepository.save(actualizarDepto);
 
         } catch (err) {
             handleServiceError(err);
@@ -127,7 +125,7 @@ export class DepartamentosService {
             const depto = await this.deptoRepository.delete(id);
 
             if (!depto) {
-                throw new NotFoundException(`El departamento con el id ${id} no fue encontrado`)
+                throw new RpcException(`El departamento con el id ${id} no fue encontrado`)
             };
 
             return depto;

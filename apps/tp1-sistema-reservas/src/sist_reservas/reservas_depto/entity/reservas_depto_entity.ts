@@ -1,7 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { EstadoReserva } from "../../../common/enum";
 import { DepartamentosEntity } from "../../departamentos/entity/departamentos.entity";
-import { UsuariosEntity } from "../../usuarios/entity/usuarios.entity";
 
 
 @Entity("reservas_depto")
@@ -32,7 +31,7 @@ export class ReservasDeptoEntity {
     @Column({
         type: "decimal",
     })
-    precio_total_depto: number;
+    precio_total_depto?: number;
 
     @Column({
         type: 'boolean',
@@ -60,7 +59,6 @@ export class ReservasDeptoEntity {
     @JoinColumn({ name: "id_depto"})
     departamento: DepartamentosEntity;
 
-    @ManyToOne(() => UsuariosEntity, (usuario) => usuario.reservas)
-    @JoinColumn({ name: "id"})
-    usuario: UsuariosEntity;
+    @Column({type: 'int', nullable: true})
+    id_usuario?: number;
 }

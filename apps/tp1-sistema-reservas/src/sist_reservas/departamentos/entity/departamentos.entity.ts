@@ -23,13 +23,13 @@ export class DepartamentosEntity {
         type: 'decimal',
         nullable: true
     })
-    precio_base_depto: number;
+    precio_base_depto?: number;
 
     @Column({
         type: 'int',
         nullable: true
     })
-    capacidad: number;
+    capacidad?: number;
 
     @OneToMany(DepartamentosEntity => ReservasDeptoEntity, reserva => reserva.departamento)
     reservas_depto: ReservasDeptoEntity[];

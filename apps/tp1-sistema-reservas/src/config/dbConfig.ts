@@ -12,4 +12,5 @@ export const dbConfig: TypeOrmModuleOptions = {
     entities: [],
     autoLoadEntities: true,
     synchronize: true,
+    logging: true
 }

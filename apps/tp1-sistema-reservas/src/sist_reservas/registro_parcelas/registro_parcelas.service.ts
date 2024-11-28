@@ -1,18 +1,23 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { EstadoParcela, handleServiceError } from '../../common';
 import { formatPage, formatTake, MAX_TAKE_PER_QUERY } from '../../common/paginationHelper';
 import { PaginatorDto } from '../../common/paginatorDto';
 import { Metadata, PaginatorRegistroParcelas } from '../../common/types';
+import { MAILER_SERVICE, USUARIO_SERVICE } from '../../config';
 import { ParcelasEntity } from '../parcelas/entity/parcelas.entity';
 import { Registro_parcelasEntity } from './entity/regist_parc_entity';
 import { Registro_parcelasDto } from './entity/regist_parcDto';
-import { ClientProxy } from '@nestjs/microservices';
 
-
+   
+interface RegistroSalidaResponse extends Registro_parcelasDto {
+  message: string;
+  precio_total: number;
+}
 
 @Injectable()
 export class RegistroParcelasService {
@@ -21,13 +26,17 @@ export class RegistroParcelasService {
     private readonly registroParcelaRepository: Repository<Registro_parcelasEntity>,
     @InjectRepository(ParcelasEntity)
     private readonly parcelaRepository: Repository<ParcelasEntity>,
-    @Inject('Mailer_MS')
-    private readonly client: ClientProxy,
+    @Inject(MAILER_SERVICE)
+    private readonly mailerService: ClientProxy,
+    @Inject(USUARIO_SERVICE)
+    private readonly usuarioClient: ClientProxy,
 
-    private readonly logger = new Logger('RegistroServiceLogger')
-  ) { 
-    client.send('send-mail', 'test')
-   }
+  ) {
+ 
+  }
+
+  private readonly logger = new Logger('RegistroServiceLogger');
+  
 
   /**
    * @description va a marcar el ingreso de una parcela 
@@ -35,27 +44,48 @@ export class RegistroParcelasService {
    * @param registroIngreso los datos el registro de ingreso 
    * @returns el nuevo registro de la parcela
    */
-  async registrarIngreso(registroIngreso: Registro_parcelasDto, id_parcela: number) {
+  async registrarIngreso(registroIngreso: Registro_parcelasDto, id_parcela: number, id_usuario: number, usuario?: any ){
     try {
+
+      if (!registroIngreso) {
+        throw new RpcException('Datos inválidos');
+      }
+
+      if (!id_parcela) {
+        throw new RpcException('parcela no encontrado');
+    }
+
       //verificamos q la parcela este disponible
       const parcela = await this.parcelaRepository.findOne({
         where: {
-          id_parcela: id_parcela
+          id_parcela
         }
       });
       if (!parcela) {
-        throw new NotFoundException("La parcela no esta disponible");
+        throw new RpcException("La parcela no esta disponible");
       }
 
       if (parcela.estado_parcela === EstadoParcela.OCUPADA) {
-        throw new BadRequestException('La parcela esta ocupada')
+        throw new RpcException('La parcela esta ocupada')
       }
 
       //comprobamos q l fecha de salida sea mayor q a la de ingreso
       if (registroIngreso.f_salida <= registroIngreso.f_ingreso) {
-        throw new Error('La fecha de salida no puede ser anterior o igual a la fecha de ingreso');
+        throw new RpcException('La fecha de salida no puede ser anterior o igual a la fecha de ingreso');
       }
 
+      const parcelaExistente = await this.registroParcelaRepository.findOne({
+        where: {
+            parcela: { id_parcela },
+            //buscamos reservas cuyo campo "desde" sea menor o igual a reservaDto.hasta (la fecha de fin de la nueva reserva).Usamos dos nodos para determinar si el primero es menor o igual que el segundo
+            f_ingreso: LessThanOrEqual(registroIngreso.f_salida),
+            f_salida: MoreThanOrEqual(registroIngreso.f_ingreso)
+        }
+    });
+
+    if (parcelaExistente) {
+      new RpcException('La parcela no está disponible para las fechas solicitadas');
+    }
 
       const codigoUnico = uuidv4().split('-')[0];
 
@@ -63,18 +93,25 @@ export class RegistroParcelasService {
       const newRegistro = this.registroParcelaRepository.create({
         ...registroIngreso,
         parcela: parcela,
-        f_ingreso: registroIngreso.f_ingreso,
-        codigo_unico_parcela: codigoUnico
+        id_usuario,
+        codigo_unico_parcela: codigoUnico,
+        precio_total_parc: 0
       });
 
       parcela.estado_parcela = EstadoParcela.OCUPADA;
       await this.parcelaRepository.save(parcela);
 
-      this.client.emit("send-mail", 'Registro de parcela correctamente');
+      this.logger.log(`Registro de parcela creada exitosamente para el departamento ID: ${id_parcela} por el usuario ID: ${id_usuario}`);
+
 
       return await this.registroParcelaRepository.save(newRegistro);
     } catch (error) {
-      handleServiceError(error);
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException(
+        error.message || 'Ocurrió un error inesperado en el servicio'
+      );
     }
   }
 
@@ -84,29 +121,38 @@ export class RegistroParcelasService {
    * @param codigo_unico_parcela codigo unico del registro de la parcela
    * @returns el registro de la parcela actualizado 
    */
-  async registrarSalida(codigo_unico_parcela: string): Promise<Registro_parcelasDto> {
+  async registrarSalida(codigo_unico_parcela: string, id_usuario: number): Promise<RegistroSalidaResponse> {
 
     try {
       //buscamos el reigstro de la parcela
       const registro = await this.registroParcelaRepository.findOne({ where: { codigo_unico_parcela } });
-      if (!registro) {
-        throw new NotFoundException('Registro no enccontrado o ya finalizado')
-      };
 
+      if (!registro) {
+        throw new RpcException('Registro no enccontrado o ya finalizado')
+      };
 
       //calculamos el precio total
       const precioTotal = await this.calcularPrecioTotal(registro.id_reg_parcela, registro.f_ingreso, registro.f_salida);
       //Actualizamos el registro con el precio total
       registro.precio_total_parc = precioTotal;
 
-      const parcela = await this.parcelaRepository.findOne({ where: { id_parcela: registro.id_reg_parcela } });
+      const parcela = await this.parcelaRepository.findOne({ where: { id_parcela: registro.id_reg_parcela }});
+
       if (!parcela) {
-        throw new NotFoundException('parcela no encontrada');
+        throw new RpcException('parcela no encontrada');
       }
+
       parcela.estado_parcela = EstadoParcela.DISPONIBLE;
       await this.parcelaRepository.save(parcela);
 
-      return this.registroParcelaRepository.save(registro)
+      await this.registroParcelaRepository.save(registro);
+
+      return {
+        ...registro,
+        message: 'Registro finalizado correctamente',
+        precio_total: precioTotal,
+      };
+
     } catch (error) {
       handleServiceError(error);
     }
@@ -124,9 +170,6 @@ export class RegistroParcelasService {
     if (!parcela) {
       throw new Error('El departamento no existe');
     }
-
-
-
     //extraemos el precio base del departamento, si viene null o undefined, lo seteamos en 0
     const precio_base_parcela = parcela.precio_base_parc || 0;
     this.logger.log("el precio base d la parcela", precio_base_parcela);
@@ -205,7 +248,7 @@ export class RegistroParcelasService {
       const resultado = await this.registroParcelaRepository.delete({ codigo_unico_parcela: codigo_unico_parcela });
 
       if (resultado.affected === 0) {
-        throw new NotFoundException('Registro no encontrado');
+        throw new RpcException('Registro no encontrado');
       }
 
       return 'Registro eliminado exitosamente';
@@ -214,4 +257,3 @@ export class RegistroParcelasService {
     }
   }
 }
-

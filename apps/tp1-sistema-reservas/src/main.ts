@@ -1,27 +1,25 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { envs } from './config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
 
-  const config = new DocumentBuilder()
-    .setTitle('Sistema de reservas')
-    .setDescription('El proyecto de microservicios, el de sistema de reservas')
-    .setVersion('1.0')
-    .addTag('sistema de reservas')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('', app, document);
+  const logger = new Logger('Microservice Sistema de reservas');
 
-  app.enableCors();
-
-  app.setGlobalPrefix('api');
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    transport: Transport.TCP,
+    options: {
+      port: envs.port,
+      host: envs.host
+    }
+  })
 
   app.useGlobalPipes(new ValidationPipe());
 
-  await app.listen(envs.port);
+  await app.listen();
+
+  logger.log(`Microservice sistem reservs listening on port: ${envs.port} `)
 }
 bootstrap();

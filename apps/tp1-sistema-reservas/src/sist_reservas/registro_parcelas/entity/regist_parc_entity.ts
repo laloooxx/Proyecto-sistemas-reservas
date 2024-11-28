@@ -1,5 +1,4 @@
 import { ParcelasEntity } from "../../parcelas/entity/parcelas.entity";
-import { UsuariosEntity } from "../../usuarios/entity/usuarios.entity";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 
@@ -35,7 +34,6 @@ export class Registro_parcelasEntity {
     @JoinColumn({ name: "num_parcela"})
     parcela: ParcelasEntity;
 
-    @ManyToOne(() => UsuariosEntity, (usuario) => usuario.registro_parcelas)
-    @JoinColumn({name: "id"})
-    usuario: UsuariosEntity;
+    @Column({type: 'int', nullable: true})
+    id_usuario?: number;
 }
